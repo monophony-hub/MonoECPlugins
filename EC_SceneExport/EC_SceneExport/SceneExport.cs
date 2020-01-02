@@ -22,7 +22,7 @@ namespace EC_SceneExport
         public const string PluginNameInternal = "EC_SceneExport";
         public const string GUID = "com.monophony.bepinex.sceneexport";
         public const string PluginName = "Scene Export";
-        public const string Version = "0.1";
+        public const string Version = "0.2";
         internal static new ManualLogSource Logger;
         public static readonly string ExportPath = Path.Combine(Paths.GameRootPath, @"UserData\SceneExport");
 
@@ -51,15 +51,46 @@ namespace EC_SceneExport
 
 #if New_BP
             if (PartsExportHotkey.Value.IsDown())
-                ExportParts();
+                bExport = true;
             if (PartsImportHotkey.Value.IsDown())
-                ImportParts();
+                bImport = true;
 #else
-            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.E))
-                ExportParts();
-            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.I))
-                ImportParts();
+            if (!Input.GetKey(KeyCode.LeftControl)) return;
+
+            int iEvent = 0;
+
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                iEvent = 1;
+            }
+            else if (Input.GetKeyDown(KeyCode.I))
+            {
+                iEvent = 2;
+            }
+            else
+            {
+                return;
+            }
 #endif
+
+            try
+            {
+                switch (iEvent)
+                {
+                    case 1:
+                        this.ExportParts();
+                        break;
+                    case 2:
+                        this.ImportParts();
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Log(BepInEx.Logging.LogLevel.Message, "Error: " + ex.Message);
+                Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.cancel);
+                throw;
+            }
         }
 
         /// <summary>
@@ -99,7 +130,7 @@ namespace EC_SceneExport
                     strKind = "ADV";
                 }
 
-                string fileName = HEditData.Instance.info.title + "_" + partCount + "_" + strKind + "_" + partName + "."+FileExtension;
+                string fileName = HEditData.Instance.info.title + "_" + partCount + "_" + strKind + "_" + partName + "." + FileExtension;
                 string fullPath = Path.Combine(ExportPath, fileName);
 
                 partCount++;
@@ -128,12 +159,84 @@ namespace EC_SceneExport
         }
 
         /// <summary>
+        /// パートをインポートします。
+        /// </summary>
+        public void ImportParts()
+        {
+            if (!Directory.Exists(ExportPath))
+            {
+                // フォルダなし
+                return;
+            }
+
+            DirectoryInfo di = new System.IO.DirectoryInfo(ExportPath);
+            FileInfo[] files =
+                di.GetFiles("*." + FileExtension, System.IO.SearchOption.TopDirectoryOnly);
+
+            foreach (System.IO.FileInfo f in files)
+            {
+                BasePart aPart;
+                string partTitle;
+
+                // ADVPartにデータをロード
+                using (FileStream fileStream = new FileStream(f.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    using (BinaryReader binaryReader = new BinaryReader(fileStream))
+                    {
+
+                        if (this.ReadPart(binaryReader, f, out aPart, out partTitle))
+                        {
+                            continue;
+                        }
+                    }
+                }
+
+                // ノードを作成
+                NodeBase aNode = HEdit.HEditGlobal.Instance.nodeControl.Create((NodeKind)aPart.kind, 0);
+
+                // パートのIDをノード（画面上の箱）のIDに一致させる
+                aPart.uuId = aNode.uid;
+
+                aNode.name = partTitle;
+                // パートのテーブルに追加
+                HEdit.HEditData.Instance.nodes.Add(aNode.uid, aPart);
+
+#if false
+                        // HEditData.Loadを参考
+                        if (HEditData.Instance.dataVersion.CompareTo(new Version(0, 0, 1, 10)) < 0 && HEditData.Instance.maps.Count > 1)
+                        {
+                            aPart.useMapID = 1;
+                        }
+#endif
+                // NodeUIを取得してタイトルを更新
+                NodeUI _nodeUI;
+                if (HEdit.HEditGlobal.Instance.nodeControl.dictNode.TryGetValue(aPart.uuId, out _nodeUI))
+                {
+                    Logger.Log(BepInEx.Logging.LogLevel.Debug, "UpdateUI");
+                    _nodeUI.UpdateTitle();
+                }
+
+                Logger.Log(BepInEx.Logging.LogLevel.Message, "Imported " + f.FullName);
+            }
+
+            Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.ok_s);
+        }
+
+        /// <summary>
         /// ADVパートのキャラ数を調整
         /// </summary>
         /// <param name="part"></param>
-        private void FixADV(HEdit.ADVPart part, string partName)
+        private bool checkADVPart(HEdit.ADVPart part, string partName)
         {
             int charaNum = 0;
+
+#if false
+            //マップID
+            if (part.useMapID >= HEditData.Instance.maps.Count)
+            {
+                part.useMapID = 1;
+            }
+#endif
 
             foreach (HEdit.ADVPart.Cut c in part.cuts)
             {
@@ -156,7 +259,7 @@ namespace EC_SceneExport
                 }
                 else if (diff < 0)
                 {
-                    //キャラが多いので追加
+                    //キャラが多いので削除
                     c.charStates.RemoveRange(c.charStates.Count + diff, -diff);
                 }
             }
@@ -164,6 +267,8 @@ namespace EC_SceneExport
             {
                 Logger.Log(BepInEx.Logging.LogLevel.Message, charaNum + " charactors in ADV part:" + partName);
             }
+
+            return true;
         }
 
 #if false
@@ -177,7 +282,7 @@ namespace EC_SceneExport
         }
 
         /// <summary>
-        /// ADVパートのキャラ数を調整
+        /// Hパートのキャラ数を調整
         /// </summary>
         /// <param name="part"></param>
         private void FixHPart(HEdit.HPart part, string partName)
@@ -202,6 +307,13 @@ namespace EC_SceneExport
             }
         }
 #endif
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="part"></param>
+        /// <param name="partName"></param>
+        /// <returns>パートに問題があるときはfalse</returns>
         private bool checkHPart(HEdit.HPart part, string partName)
         {
             foreach (HEdit.HPart.Group g in part.groups)
@@ -218,97 +330,53 @@ namespace EC_SceneExport
             return true;
         }
 
-        /// <summary>
-        /// パートをインポートします。
-        /// </summary>
-        public void ImportParts()
+        private bool ReadPart(BinaryReader binaryReader, FileInfo f, out BasePart aPart, out string partTitle)
         {
-            if (!Directory.Exists(ExportPath))
+            aPart = null;
+            partTitle = null;
+
+            // マジック
+            string tmpMagic = binaryReader.ReadString();
+            if (tmpMagic != SceneExport.MAGIC)
             {
-                // フォルダなし
-                return;
+                Logger.Log(BepInEx.Logging.LogLevel.Message, "Error: Invalid file format:" + f.FullName);
+                return false;
             }
+            // 名前
+            partTitle = binaryReader.ReadString();
 
-            DirectoryInfo di = new System.IO.DirectoryInfo(ExportPath);
-            FileInfo[] files =
-                di.GetFiles("*." + FileExtension, System.IO.SearchOption.TopDirectoryOnly);
+            // Kind
+            int kind = binaryReader.ReadInt32();
 
-            foreach (System.IO.FileInfo f in files)
+            //キー
+            string sb_key = binaryReader.ReadString();
+
+            if (kind == 0)
             {
-                // ADVPartにデータをロード
-                using (FileStream fileStream = new FileStream(f.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                //H パート
+                aPart = new HEdit.HPart();
+                aPart.Load(binaryReader, HEditData.Instance.dataVersion);
+                if (!this.checkHPart((HEdit.HPart)aPart, f.Name))
                 {
-                    using (BinaryReader binaryReader = new BinaryReader(fileStream))
-                    {
-                        // マジック
-                        string tmpMagic = binaryReader.ReadString();
-                        if (tmpMagic != SceneExport.MAGIC)
-                        {
-                            Logger.Log(BepInEx.Logging.LogLevel.Message, "Invalid part file:" + f.FullName);
-                            continue;
-                        }
-                        // 名前
-                        string partTitle = binaryReader.ReadString();
+                    //読み込めないデータ
+                    return false;
+                }
+            }
+            else
+            {
+                //ADV パート
+                aPart = new HEdit.ADVPart(0);
+                aPart.Load(binaryReader, HEditData.Instance.dataVersion);
 
-                        // Kind
-                        int kind = binaryReader.ReadInt32();
-
-                        //キー
-                        string sb_key = binaryReader.ReadString();
-
-                        BasePart aPart;
-                        NodeBase aNode;
-
-                        if (kind == 0)
-                        {
-                            //H パート
-                            aPart = new HEdit.HPart();
-                            aPart.Load(binaryReader, HEditData.Instance.dataVersion);
-                            if (!this.checkHPart((HEdit.HPart)aPart, f.Name))
-                            {
-                                //読み込めないデータ
-                                continue;
-                            }
-                            aNode = HEdit.HEditGlobal.Instance.nodeControl.Create(NodeKind.H, 0);
-                        }
-                        else
-                        {
-                            //ADV パート
-                            aPart = new HEdit.ADVPart(0);
-                            aPart.Load(binaryReader, HEditData.Instance.dataVersion);
-                            this.FixADV((HEdit.ADVPart)aPart, f.Name);
-
-                            aNode = HEdit.HEditGlobal.Instance.nodeControl.Create(NodeKind.ADV, 0);
-                        }
-
-                        // パートのIDをノード（画面上の箱）のIDに一致させる
-                        aPart.uuId = aNode.uid;
-
-                        aNode.name = partTitle;
-                        // パートのテーブルに追加
-                        HEdit.HEditData.Instance.nodes.Add(aNode.uid, aPart);
-
-#if false
-                        // HEditData.Loadを参考
-                        if (HEditData.Instance.dataVersion.CompareTo(new Version(0, 0, 1, 10)) < 0 && HEditData.Instance.maps.Count > 1)
-                        {
-                            aPart.useMapID = 1;
-                        }
-#endif
-                        // NodeUIを取得してタイトルを更新
-                        NodeUI _nodeUI;
-                        if (HEdit.HEditGlobal.Instance.nodeControl.dictNode.TryGetValue(aPart.uuId, out _nodeUI))
-                        {
-                            Logger.Log(BepInEx.Logging.LogLevel.Debug, "UpdateUI");
-                            _nodeUI.UpdateTitle();
-                        }
-
-                        Logger.Log(BepInEx.Logging.LogLevel.Message, "Imported " + f.FullName);
-                    }
+                if (this.checkADVPart((HEdit.ADVPart)aPart, f.Name))
+                {
+                    //読み込めないデータ
+                    return false;
                 }
             }
 
-            Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.ok_s);
+            return true;
         }
+
     }
 }
