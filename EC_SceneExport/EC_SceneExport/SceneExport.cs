@@ -1,11 +1,14 @@
 ﻿
 // 新しいBepinEx 5用には、以下のdefineを有効
-//#define New_BP
+// #define USE_BEPINEX_50
+
+// キャラ削除機能を使う場合
+// #define ADV_CHARA_REMOVE
 
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-#if New_BP
+#if USE_BEPINEX_50
 using HarmonyLib;
 #endif
 using System;
@@ -14,9 +17,6 @@ using System.IO;
 using UnityEngine;
 using HEdit;
 using YS_Node;
-
-// キャラ削除機能を使う場合
-// #define ADV_CHARA_REMOVE
 
 namespace EC_SceneExport
 {
@@ -30,9 +30,9 @@ namespace EC_SceneExport
         internal static new ManualLogSource Logger;
         public static readonly string ExportPath = Path.Combine(Paths.GameRootPath, @"UserData\SceneExport");
 
-        // ファイル識別用
+        // partファイル識別用
         private const string MAGIC = "ECP1";
-#if New_BP
+#if USE_BEPINEX_50
         public static ConfigEntry<KeyboardShortcut> PartsExportHotkey { get; private set; }
         public static ConfigEntry<KeyboardShortcut> PartsImportHotkey { get; private set; }
 #endif
@@ -43,7 +43,7 @@ namespace EC_SceneExport
         internal void Start()
         {
             Logger = base.Logger;
-#if New_BP
+#if USE_BEPINEX_50
             PartsExportHotkey = Config.Bind("Keyboard Shortcuts", "Export Parts", new KeyboardShortcut(KeyCode.E, new KeyCode[] { KeyCode.LeftControl }), "Export all currently loaded parts in the game.");
             PartsImportHotkey = Config.Bind("Keyboard Shortcuts", "Import Parts", new KeyboardShortcut(KeyCode.I, new KeyCode[] { KeyCode.LeftControl }), "Import all files in the exported folder.");
 #endif
@@ -55,7 +55,7 @@ namespace EC_SceneExport
             // このため、この判定方法では正しく判定できない
             if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "HEditScene") return;
 
-#if New_BP
+#if USE_BEPINEX_50
             if (PartsExportHotkey.Value.IsDown())
                 bExport = true;
             if (PartsImportHotkey.Value.IsDown())
