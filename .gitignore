@@ -1,0 +1,7 @@
+﻿################################################################################
+# この .gitignore ファイルは Microsoft(R) Visual Studio によって自動的に作成されました。
+################################################################################
+
+/EC_SceneExport/EC_SceneExport/obj/Debug
+/EC_SceneExport/EC_SceneExport/bin/Debug
+/EC_SceneExport/.vs/EC_SceneExport/v15
