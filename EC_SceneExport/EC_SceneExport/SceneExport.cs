@@ -47,6 +47,8 @@ namespace EC_SceneExport
 
         internal void Update()
         {
+            // HEditSceneで判定しているが、電車マップのパート編集にすると、シーンがHEditScene からTrainに切り替わってしまう
+            // このため、この判定方法では正しく判定できない
             if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "HEditScene") return;
 
 #if New_BP
