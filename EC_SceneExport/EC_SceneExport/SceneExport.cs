@@ -98,7 +98,7 @@ namespace EC_SceneExport
         /// </summary>
         public void ExportParts()
         {
-            Logger.LogDebug("Start export");
+            // Logger.Log(LogLevel.Debug, "S:" + UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
 
             if (!Directory.Exists(ExportPath))
             {
@@ -133,8 +133,6 @@ namespace EC_SceneExport
                 string fileName = HEditData.Instance.info.title + "_" + partCount + "_" + strKind + "_" + partName + "." + FileExtension;
                 string fullPath = Path.Combine(ExportPath, fileName);
 
-                Logger.LogDebug(fileName);
-
                 partCount++;
 
                 using (FileStream fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write))
@@ -165,11 +163,8 @@ namespace EC_SceneExport
         /// </summary>
         public void ImportParts()
         {
-            Logger.LogDebug("Start import");
-
             if (!Directory.Exists(ExportPath))
             {
-                Logger.LogDebug("No files");
                 // フォルダなし
                 return;
             }
@@ -188,7 +183,8 @@ namespace EC_SceneExport
                 {
                     using (BinaryReader binaryReader = new BinaryReader(fileStream))
                     {
-                        if (this.ReadPart(binaryReader, f, out aPart, out partTitle) == false)
+
+                        if (this.ReadPart(binaryReader, f, out aPart, out partTitle))
                         {
                             continue;
                         }
@@ -226,31 +222,22 @@ namespace EC_SceneExport
             Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.ok_s);
         }
 
-        private void checkMap(HEdit.BasePart part)
-        {
-            Logger.LogDebug("Part mapID:" + part.useMapID);
-
-            //マップID
-            if (part.useMapID >= HEditData.Instance.maps.Count)
-            {
-                Logger.LogDebug("useMapID out of range. Set map id to 0");
-                part.useMapID = 0;
-            }
-        }
-
         /// <summary>
         /// ADVパートのキャラ数を調整
         /// </summary>
         /// <param name="part"></param>
         private bool checkADVPart(HEdit.ADVPart part, string partName)
         {
-            Logger.LogDebug("check start");
-
-            checkMap(part);
-
             int charaNum = 0;
 
-            // キャラチェック
+#if false
+            //マップID
+            if (part.useMapID >= HEditData.Instance.maps.Count)
+            {
+                part.useMapID = 1;
+            }
+#endif
+
             foreach (HEdit.ADVPart.Cut c in part.cuts)
             {
                 int diff = HEditData.Instance.charas.Count - c.charStates.Count;
@@ -258,8 +245,6 @@ namespace EC_SceneExport
                 if (diff == 0) continue;
 
                 charaNum = c.charStates.Count;
-
-                Logger.LogDebug("Chara num:" + charaNum);
 
                 if (diff > 0)
                 {
@@ -278,7 +263,6 @@ namespace EC_SceneExport
                     c.charStates.RemoveRange(c.charStates.Count + diff, -diff);
                 }
             }
-
             if (charaNum != 0)
             {
                 Logger.Log(BepInEx.Logging.LogLevel.Message, charaNum + " charactors in ADV part:" + partName);
@@ -332,8 +316,6 @@ namespace EC_SceneExport
         /// <returns>パートに問題があるときはfalse</returns>
         private bool checkHPart(HEdit.HPart part, string partName)
         {
-            checkMap(part);
-
             foreach (HEdit.HPart.Group g in part.groups)
             {
                 foreach (var cs in g.infoCharas)
@@ -348,18 +330,8 @@ namespace EC_SceneExport
             return true;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="binaryReader"></param>
-        /// <param name="f"></param>
-        /// <param name="aPart"></param>
-        /// <param name="partTitle"></param>
-        /// <returns></returns>
         private bool ReadPart(BinaryReader binaryReader, FileInfo f, out BasePart aPart, out string partTitle)
         {
-            Logger.LogDebug("ReadPart " + f.FullName);
-
             aPart = null;
             partTitle = null;
 
@@ -384,7 +356,7 @@ namespace EC_SceneExport
                 //H パート
                 aPart = new HEdit.HPart();
                 aPart.Load(binaryReader, HEditData.Instance.dataVersion);
-                if (this.checkHPart((HEdit.HPart)aPart, f.Name) == false)
+                if (!this.checkHPart((HEdit.HPart)aPart, f.Name))
                 {
                     //読み込めないデータ
                     return false;
@@ -396,7 +368,7 @@ namespace EC_SceneExport
                 aPart = new HEdit.ADVPart(0);
                 aPart.Load(binaryReader, HEditData.Instance.dataVersion);
 
-                if (this.checkADVPart((HEdit.ADVPart)aPart, f.Name) == false)
+                if (this.checkADVPart((HEdit.ADVPart)aPart, f.Name))
                 {
                     //読み込めないデータ
                     return false;
@@ -405,5 +377,6 @@ namespace EC_SceneExport
 
             return true;
         }
+
     }
 }
