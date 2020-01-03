@@ -1,4 +1,4 @@
-﻿Scene export plugin for Emotion Creator v0.2
+﻿Scene export plugin for Emotion Creators
 Made by monophony
 
 ■説明
