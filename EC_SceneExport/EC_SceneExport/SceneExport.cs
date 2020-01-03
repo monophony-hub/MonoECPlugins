@@ -1,4 +1,8 @@
-﻿using BepInEx;
+﻿
+// 新しいBepinEx 5用には、以下のdefineを有効
+//#define New_BP
+
+using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 #if New_BP
@@ -11,8 +15,8 @@ using UnityEngine;
 using HEdit;
 using YS_Node;
 
-// 新しいBepinEx 5用には、以下のdefineを有効
-//#define New_BP
+// キャラ削除機能を使う場合
+// #define ADV_CHARA_REMOVE
 
 namespace EC_SceneExport
 {
@@ -22,7 +26,7 @@ namespace EC_SceneExport
         public const string PluginNameInternal = "EC_SceneExport";
         public const string GUID = "com.monophony.bepinex.sceneexport";
         public const string PluginName = "Scene Export";
-        public const string Version = "0.2";
+        public const string Version = "0.3";
         internal static new ManualLogSource Logger;
         public static readonly string ExportPath = Path.Combine(Paths.GameRootPath, @"UserData\SceneExport");
 
@@ -276,8 +280,14 @@ namespace EC_SceneExport
                 }
                 else if (diff < 0)
                 {
+#if ADV_CHARA_REMOVE
                     //キャラが多いので削除
                     c.charStates.RemoveRange(c.charStates.Count + diff, -diff);
+#else
+                    //キャラが多い場合はエラーで抜ける
+                    Logger.Log(BepInEx.Logging.LogLevel.Message, "Error: The number of charas (" + c.charStates.Count + ") is over in ADV part."+ partName);
+                    return false;
+#endif
                 }
             }
 
@@ -342,7 +352,7 @@ namespace EC_SceneExport
                 {
                     if (cs.useCharaID >= HEditData.Instance.charas.Count)
                     {
-                        Logger.Log(BepInEx.Logging.LogLevel.Message, "Error: Invalid charaID " + cs.useCharaID + " in H part." + partName);
+                        Logger.Log(BepInEx.Logging.LogLevel.Message, "Error: Invalid charaID (" + cs.useCharaID + ") in H part." + partName);
                         return false;
                     }
                 }
