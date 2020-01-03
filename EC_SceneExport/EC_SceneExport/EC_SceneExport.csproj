@@ -32,19 +32,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>..\..\..\..\..\..\..\game\illusion\emotioncreators\BepInEx\core\0Harmony.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\game\illusion\emotioncreators\BepInEx\core\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\..\..\game\illusion\emotioncreators\EmotionCreators_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\game\illusion\emotioncreators\EmotionCreators_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx">
-      <HintPath>..\..\..\..\..\..\..\game\illusion\emotioncreators\BepInEx\core\BepInEx.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\game\illusion\emotioncreators\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx.Harmony">
-      <HintPath>..\..\..\..\..\..\..\game\illusion\emotioncreators\BepInEx\core\BepInEx.Harmony.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\game\illusion\emotioncreators\BepInEx\core\BepInEx.Harmony.dll</HintPath>
     </Reference>
     <Reference Include="IL">
-      <HintPath>..\..\..\..\..\..\..\game\illusion\emotioncreators\EmotionCreators_Data\Managed\IL.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\game\illusion\emotioncreators\EmotionCreators_Data\Managed\IL.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
@@ -55,10 +55,10 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\..\..\game\illusion\emotioncreators\EmotionCreators_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\game\illusion\emotioncreators\EmotionCreators_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\..\..\..\..\..\game\illusion\emotioncreators\EmotionCreators_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\game\illusion\emotioncreators\EmotionCreators_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
