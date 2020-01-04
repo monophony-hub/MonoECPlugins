@@ -1,16 +1,9 @@
-﻿
-// 新しいBepinEx 5用には、以下のdefineを有効
-// #define USE_BEPINEX_50
-
-// キャラ削除機能を使う場合
-// #define ADV_CHARA_REMOVE
+﻿// 新しいBepinEx 5用には、以下のdefineを有効
+#define USE_BEPINEX_50
 
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-#if USE_BEPINEX_50
-using HarmonyLib;
-#endif
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,7 +19,7 @@ namespace EC_SceneExport
         public const string PluginNameInternal = "EC_SceneExport";
         public const string GUID = "com.monophony.bepinex.sceneexport";
         public const string PluginName = "Scene Export";
-        public const string Version = "0.3";
+        public const string Version = "0.4";
         internal static new ManualLogSource Logger;
         public static readonly string ExportPath = Path.Combine(Paths.GameRootPath, @"UserData\SceneExport");
 
@@ -35,6 +28,7 @@ namespace EC_SceneExport
 #if USE_BEPINEX_50
         public static ConfigEntry<KeyboardShortcut> PartsExportHotkey { get; private set; }
         public static ConfigEntry<KeyboardShortcut> PartsImportHotkey { get; private set; }
+        public static ConfigEntry<bool> EnableCharaRemove { get; private set; }
 #endif
         private const int PART_KIND_H = 0;
         private const int PART_KIND_ADV = 1;
@@ -46,24 +40,25 @@ namespace EC_SceneExport
 #if USE_BEPINEX_50
             PartsExportHotkey = Config.Bind("Keyboard Shortcuts", "Export Parts", new KeyboardShortcut(KeyCode.E, new KeyCode[] { KeyCode.LeftControl }), "Export all currently loaded parts in the game.");
             PartsImportHotkey = Config.Bind("Keyboard Shortcuts", "Import Parts", new KeyboardShortcut(KeyCode.I, new KeyCode[] { KeyCode.LeftControl }), "Import all files in the exported folder.");
+            EnableCharaRemove = Config.Bind("Experimental", "Enable chara remove", false, "If the importing ADV part over characters, delete the characters.");
 #endif
         }
 
         internal void Update()
         {
+            int iEvent = 0;
+
             // HEditSceneで判定しているが、電車マップのパート編集にすると、シーンがHEditScene からTrainに切り替わってしまう
             // このため、この判定方法では正しく判定できない
             if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "HEditScene") return;
 
 #if USE_BEPINEX_50
             if (PartsExportHotkey.Value.IsDown())
-                bExport = true;
+                iEvent = 1;
             if (PartsImportHotkey.Value.IsDown())
-                bImport = true;
+                iEvent = 2;
 #else
             if (!Input.GetKey(KeyCode.LeftControl)) return;
-
-            int iEvent = 0;
 
             if (Input.GetKeyDown(KeyCode.E))
             {
@@ -102,7 +97,7 @@ namespace EC_SceneExport
         /// <summary>
         /// Exports all currently loaded characters. Probably wont export characters that have not been loaded yet, like characters in a different classroom.
         /// </summary>
-        public void ExportParts()
+        private void ExportParts()
         {
             Logger.LogDebug("Start export");
 
@@ -120,14 +115,9 @@ namespace EC_SceneExport
                     continue;
                 }
 
-                string partName = "";
-
                 // パートの名前を取得
-                NodeUI _nodeUI;
-                if (HEdit.HEditGlobal.Instance.nodeControl.dictNode.TryGetValue(keyValuePair.Value.uuId, out _nodeUI))
-                {
-                    partName = _nodeUI.nodeBase.name;
-                }
+                NodeUI _nodeUI = HEdit.HEditGlobal.Instance.nodeControl.dictNode[keyValuePair.Value.uuId];
+                string partName = _nodeUI.nodeBase.name;
 
                 // Kindを文字列にする
                 string strKind = "H";
@@ -169,7 +159,7 @@ namespace EC_SceneExport
         /// <summary>
         /// パートをインポートします。
         /// </summary>
-        public void ImportParts()
+        private void ImportParts()
         {
             Logger.LogDebug("Start import");
 
@@ -211,28 +201,16 @@ namespace EC_SceneExport
                 // パートのテーブルに追加
                 HEdit.HEditData.Instance.nodes.Add(aNode.uid, aPart);
 
-#if false
-                        // HEditData.Loadを参考
-                        if (HEditData.Instance.dataVersion.CompareTo(new Version(0, 0, 1, 10)) < 0 && HEditData.Instance.maps.Count > 1)
-                        {
-                            aPart.useMapID = 1;
-                        }
-#endif
                 // NodeUIを取得してタイトルを更新
-                NodeUI _nodeUI;
-                if (HEdit.HEditGlobal.Instance.nodeControl.dictNode.TryGetValue(aPart.uuId, out _nodeUI))
-                {
-                    Logger.Log(BepInEx.Logging.LogLevel.Debug, "UpdateUI");
-                    _nodeUI.UpdateTitle();
-                }
+                HEdit.HEditGlobal.Instance.nodeControl.dictNode[aPart.uuId].UpdateTitle();
 
                 Logger.Log(BepInEx.Logging.LogLevel.Message, "Imported " + f.FullName);
             }
 
             Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.ok_s);
         }
-
-        private void checkMap(HEdit.BasePart part)
+    
+        private void CheckMap(HEdit.BasePart part)
         {
             Logger.LogDebug("Part mapID:" + part.useMapID);
 
@@ -248,11 +226,11 @@ namespace EC_SceneExport
         /// ADVパートのキャラ数を調整
         /// </summary>
         /// <param name="part"></param>
-        private bool checkADVPart(HEdit.ADVPart part, string partName)
+        private bool CheckADVPart(HEdit.ADVPart part, string partName)
         {
             Logger.LogDebug("check start");
 
-            checkMap(part);
+            CheckMap(part);
 
             int charaNum = 0;
 
@@ -280,14 +258,19 @@ namespace EC_SceneExport
                 }
                 else if (diff < 0)
                 {
-#if ADV_CHARA_REMOVE
+#if USE_BEPINEX_50
                     //キャラが多いので削除
-                    c.charStates.RemoveRange(c.charStates.Count + diff, -diff);
-#else
-                    //キャラが多い場合はエラーで抜ける
-                    Logger.Log(BepInEx.Logging.LogLevel.Message, "Error: The number of charas (" + c.charStates.Count + ") is over in ADV part."+ partName);
-                    return false;
+                    if (EnableCharaRemove.Value)
+                    {
+                        c.charStates.RemoveRange(c.charStates.Count + diff, -diff);
+                    }
+                    else
 #endif
+                    {
+                        //キャラが多い場合はエラーで抜ける
+                        Logger.Log(BepInEx.Logging.LogLevel.Message, "Error: The number of charas (" + c.charStates.Count + ") is over in ADV part." + partName);
+                        return false;
+                    }
                 }
             }
 
@@ -342,9 +325,9 @@ namespace EC_SceneExport
         /// <param name="part"></param>
         /// <param name="partName"></param>
         /// <returns>パートに問題があるときはfalse</returns>
-        private bool checkHPart(HEdit.HPart part, string partName)
+        private bool CheckHPart(HEdit.HPart part, string partName)
         {
-            checkMap(part);
+            CheckMap(part);
 
             foreach (HEdit.HPart.Group g in part.groups)
             {
@@ -363,12 +346,12 @@ namespace EC_SceneExport
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="binaryReader"></param>
+        /// <param name="br"></param>
         /// <param name="f"></param>
         /// <param name="aPart"></param>
         /// <param name="partTitle"></param>
         /// <returns></returns>
-        private bool ReadPart(BinaryReader binaryReader, FileInfo f, out BasePart aPart, out string partTitle)
+        private bool ReadPart(BinaryReader br, FileInfo f, out BasePart aPart, out string partTitle)
         {
             Logger.LogDebug("ReadPart " + f.FullName);
 
@@ -376,27 +359,27 @@ namespace EC_SceneExport
             partTitle = null;
 
             // マジック
-            string tmpMagic = binaryReader.ReadString();
+            string tmpMagic = br.ReadString();
             if (tmpMagic != SceneExport.MAGIC)
             {
                 Logger.Log(BepInEx.Logging.LogLevel.Message, "Error: Invalid file format:" + f.FullName);
                 return false;
             }
             // 名前
-            partTitle = binaryReader.ReadString();
+            partTitle = br.ReadString();
 
             // Kind
-            int kind = binaryReader.ReadInt32();
+            int kind = br.ReadInt32();
 
             //キー
-            string sb_key = binaryReader.ReadString();
+            string sb_key = br.ReadString();
 
             if (kind == 0)
             {
                 //H パート
                 aPart = new HEdit.HPart();
-                aPart.Load(binaryReader, HEditData.Instance.dataVersion);
-                if (this.checkHPart((HEdit.HPart)aPart, f.Name) == false)
+                aPart.Load(br, HEditData.Instance.dataVersion);
+                if (this.CheckHPart((HEdit.HPart)aPart, f.Name) == false)
                 {
                     //読み込めないデータ
                     return false;
@@ -406,9 +389,9 @@ namespace EC_SceneExport
             {
                 //ADV パート
                 aPart = new HEdit.ADVPart(0);
-                aPart.Load(binaryReader, HEditData.Instance.dataVersion);
+                aPart.Load(br, HEditData.Instance.dataVersion);
 
-                if (this.checkADVPart((HEdit.ADVPart)aPart, f.Name) == false)
+                if (this.CheckADVPart((HEdit.ADVPart)aPart, f.Name) == false)
                 {
                     //読み込めないデータ
                     return false;
