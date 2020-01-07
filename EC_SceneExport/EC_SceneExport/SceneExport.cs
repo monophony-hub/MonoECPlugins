@@ -1,5 +1,5 @@
 ﻿// 新しいBepinEx 5用には、以下のdefineを有効
-// #define USE_BEPINEX_50
+#define USE_BEPINEX_50
 
 using BepInEx;
 using BepInEx.Configuration;
@@ -70,10 +70,6 @@ namespace EC_SceneExport
                 }
             };
 
-#if USE_BEPINEX_50
-            // フック関数を処理します
-            HarmonyWrapper.PatchAll(typeof(Hooks));
-#endif
         }
 
         internal void Start()
@@ -314,43 +310,6 @@ namespace EC_SceneExport
             return true;
         }
 
-#if false
-        private bool checkCharaInfo(HEdit.HPart.PartCharaInfo ci)
-        {
-            if (ci.useCharaID < 0) return true;
-
-            if (ci.useCharaID >= HEditData.Instance.charas.Count) return true;
-
-            return false;
-        }
-
-        /// <summary>
-        /// Hパートのキャラ数を調整
-        /// </summary>
-        /// <param name="part"></param>
-        private void FixHPart(HEdit.HPart part, string partName)
-        {
-            int charaNum = 0;
-
-            foreach (HEdit.HPart.Group g in part.groups)
-            {
-
-                foreach (var cs in g.infoCharas)
-                {
-                    Logger.Log(BepInEx.Logging.LogLevel.Debug, "CharaInfo:" + cs.useCharaID);
-                    if (charaNum < cs.useCharaID) charaNum = cs.useCharaID;
-                }
-
-                g.infoCharas.RemoveAll(checkCharaInfo);
-            }
-
-            if (charaNum >= HEditData.Instance.charas.Count)
-            {
-                Logger.Log(BepInEx.Logging.LogLevel.Message, charaNum + 1+ " charactors in H part:" + partName);
-            }
-        }
-#endif
-
         /// <summary>
         /// 
         /// </summary>
@@ -432,19 +391,5 @@ namespace EC_SceneExport
 
             return true;
         }
-
-#if USE_BEPINEX_50
-        private static class Hooks
-        {
-            //[HarmonyPatch(typeof(ADVPart.Manipulate.CharaUICtrl), "SelectChara", typeof(int))]
-            [HarmonyPostfix]
-            [HarmonyPatch(typeof(YS_Node.NodeControl), "UpdateNodeConditions", typeof(string))]
-            private static void UpdateNodeConditionsHook(string uid)
-            {
-                System.Console.WriteLine("Scene Exposrt:UpdateNode");
-                bEnable = true;
-            }
-        }
-#endif
     }
 }
