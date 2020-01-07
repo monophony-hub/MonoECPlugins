@@ -1,26 +1,31 @@
 ﻿// 新しいBepinEx 5用には、以下のdefineを有効
-#define USE_BEPINEX_50
+// #define USE_BEPINEX_50
 
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using BepInEx.Harmony;
+#if USE_BEPINEX_50
+using HarmonyLib;
+#endif
 using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+
 using HEdit;
 using YS_Node;
 
 namespace EC_SceneExport
 {
     [BepInPlugin(GUID, PluginName, Version)]
-    public partial class SceneExport : BaseUnityPlugin
+    public class SceneExport : BaseUnityPlugin
     {
         public const string PluginNameInternal = "EC_SceneExport";
         public const string GUID = "com.monophony.bepinex.sceneexport";
         public const string PluginName = "Scene Export";
         public const string Version = "0.4";
-        internal static new ManualLogSource Logger;
         public static readonly string ExportPath = Path.Combine(Paths.GameRootPath, @"UserData\SceneExport");
 
         // partファイル識別用
@@ -29,62 +34,89 @@ namespace EC_SceneExport
         public static ConfigEntry<KeyboardShortcut> PartsExportHotkey { get; private set; }
         public static ConfigEntry<KeyboardShortcut> PartsImportHotkey { get; private set; }
         public static ConfigEntry<bool> EnableCharaRemove { get; private set; }
+        public static ConfigEntry<bool> EnablePlugin { get; private set; }
 #endif
         private const int PART_KIND_H = 0;
         private const int PART_KIND_ADV = 1;
         private const string FileExtension = "part";
 
+        private const String SceneName_HEditScene = "HEditScene";
+
+        private static bool bEnable = false;
+
+        internal void Awake()
+        {
+            Logger.LogDebug("Awake");
+
+            SceneManager.sceneUnloaded += (_scene) =>
+            {
+                Logger.LogDebug("unloaded:" + _scene.name);
+                if (_scene.name == SceneName_HEditScene)
+                {
+                    bEnable = false;
+                }
+            };
+
+            SceneManager.activeSceneChanged += (_s1, _s2) =>
+            {
+                Logger.LogDebug("activeSceneChanged:" + _s2.name);
+                if (_s2.name == SceneName_HEditScene)
+                {
+                    bEnable = true;
+                }
+                else
+                {
+                    bEnable = false;
+                }
+            };
+
+#if USE_BEPINEX_50
+            // フック関数を処理します
+            HarmonyWrapper.PatchAll(typeof(Hooks));
+#endif
+        }
+
         internal void Start()
         {
-            Logger = base.Logger;
 #if USE_BEPINEX_50
-            PartsExportHotkey = Config.Bind("Keyboard Shortcuts", "Export Parts", new KeyboardShortcut(KeyCode.E, new KeyCode[] { KeyCode.LeftControl }), "Export all currently loaded parts in the game.");
-            PartsImportHotkey = Config.Bind("Keyboard Shortcuts", "Import Parts", new KeyboardShortcut(KeyCode.I, new KeyCode[] { KeyCode.LeftControl }), "Import all files in the exported folder.");
-            EnableCharaRemove = Config.Bind("Experimental", "Enable chara remove", false, "If the importing ADV part over characters, delete the characters.");
+            EnablePlugin = Config.Bind("Config", "Enable chara remove", true, "");
+            PartsExportHotkey = Config.Bind("Config", "Export Parts", new KeyboardShortcut(KeyCode.E, new KeyCode[] { KeyCode.LeftControl }), "Export all currently loaded parts in the game.");
+            PartsImportHotkey = Config.Bind("Config", "Import Parts", new KeyboardShortcut(KeyCode.I, new KeyCode[] { KeyCode.LeftControl }), "Import all files in the exported folder.");
+            EnableCharaRemove = Config.Bind("Config", "Enable chara remove (Experimental)", false, "If the importing ADV part over characters, delete the characters.");
 #endif
         }
 
         internal void Update()
         {
-            int iEvent = 0;
-
-            // HEditSceneで判定しているが、電車マップのパート編集にすると、シーンがHEditScene からTrainに切り替わってしまう
-            // このため、この判定方法では正しく判定できない
-            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "HEditScene") return;
+#if USE_BEPINEX_50
+            if (EnablePlugin.Value == false) return;
+#endif
+            if (bEnable == false) return;
 
 #if USE_BEPINEX_50
             if (PartsExportHotkey.Value.IsDown())
-                iEvent = 1;
+                this.SafeAction(ExportParts);
             if (PartsImportHotkey.Value.IsDown())
-                iEvent = 2;
+                this.SafeAction(ImportParts);
 #else
             if (!Input.GetKey(KeyCode.LeftControl)) return;
 
             if (Input.GetKeyDown(KeyCode.E))
             {
-                iEvent = 1;
+                this.SafeAction(ExportParts);
             }
             else if (Input.GetKeyDown(KeyCode.I))
             {
-                iEvent = 2;
-            }
-            else
-            {
-                return;
+                this.SafeAction(ImportParts);
             }
 #endif
+        }
 
+        private void SafeAction(Action _action)
+        {
             try
             {
-                switch (iEvent)
-                {
-                    case 1:
-                        this.ExportParts();
-                        break;
-                    case 2:
-                        this.ImportParts();
-                        break;
-                }
+                _action();
             }
             catch (Exception ex)
             {
@@ -400,5 +432,19 @@ namespace EC_SceneExport
 
             return true;
         }
+
+#if USE_BEPINEX_50
+        private static class Hooks
+        {
+            //[HarmonyPatch(typeof(ADVPart.Manipulate.CharaUICtrl), "SelectChara", typeof(int))]
+            [HarmonyPostfix]
+            [HarmonyPatch(typeof(YS_Node.NodeControl), "UpdateNodeConditions", typeof(string))]
+            private static void UpdateNodeConditionsHook(string uid)
+            {
+                System.Console.WriteLine("Scene Exposrt:UpdateNode");
+                bEnable = true;
+            }
+        }
+#endif
     }
 }

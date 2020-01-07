@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.539
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EC_SceneExport", "EC_SceneExport\EC_SceneExport.csproj", "{0191D7F3-BBF0-45A5-8EE7-5DD9FB1FA256}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EC_ADVCopy", "EC_ADVCopy\EC_ADVCopy.csproj", "{79A1FFBE-16D4-4A8E-B87D-E539DBB2558E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{0191D7F3-BBF0-45A5-8EE7-5DD9FB1FA256}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0191D7F3-BBF0-45A5-8EE7-5DD9FB1FA256}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0191D7F3-BBF0-45A5-8EE7-5DD9FB1FA256}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79A1FFBE-16D4-4A8E-B87D-E539DBB2558E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79A1FFBE-16D4-4A8E-B87D-E539DBB2558E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79A1FFBE-16D4-4A8E-B87D-E539DBB2558E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79A1FFBE-16D4-4A8E-B87D-E539DBB2558E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
