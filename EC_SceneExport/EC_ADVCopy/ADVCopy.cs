@@ -33,6 +33,7 @@ namespace EC_ADVCopy
         private bool bEnable = false;
         private HEdit.ADVPart.CharState m_tmpCharState = new HEdit.ADVPart.CharState();
         private int m_tmpCopyIndex = -1;
+        private ADVPart.Manipulate.CharaUICtrl m_chUI;
 
         internal void Awake()
         {
@@ -43,6 +44,7 @@ namespace EC_ADVCopy
                 if (_scene.name == SceneName_HEditScene)
                 {
                     bEnable = true;
+                    m_chUI = (ADVPart.Manipulate.CharaUICtrl)GameObject.FindObjectOfType(typeof(ADVPart.Manipulate.CharaUICtrl));
                 }
             };
 
@@ -94,8 +96,8 @@ namespace EC_ADVCopy
             {
                 this.SafeAction(Paste);
             }
-        }
 #endif
+        }
 
         private void SafeAction(Action _action)
         {
@@ -115,6 +117,7 @@ namespace EC_ADVCopy
         {
             Logger.LogDebug("Copy");
 
+            if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return;     // ADV編集モードが停止中
             ChaControl ctrl = ADVCreate.ADVPartUICtrl.Instance.chaControl;
             if (ctrl == null) return;
 
@@ -129,6 +132,7 @@ namespace EC_ADVCopy
         {
             Logger.LogDebug("Swap");
 
+            if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return;     // ADV編集モードが停止中
             ChaControl ctrl = ADVCreate.ADVPartUICtrl.Instance.chaControl;
             if (ctrl == null) return;
 
@@ -143,13 +147,16 @@ namespace EC_ADVCopy
 
             Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.sel);
             Logger.LogMessage("Swap " + GetCharaName(m_tmpCopyIndex) + " and " + GetCharaName(ctrl.chaID));
-            ADVCreate.ADVPartUICtrl.Instance.ReloadCut();
+
+            m_chUI.Adapt(); //CharStateのデータをキャラに反映
+            //ADVCreate.ADVPartUICtrl.Instance.ReloadCut();
         }
 
         private void Paste()
         {
             Logger.LogDebug("Paste");
 
+            if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return;     // ADV編集モードが停止中
             ChaControl ctrl = ADVCreate.ADVPartUICtrl.Instance.chaControl;
             if (ctrl == null) return;
 
@@ -159,7 +166,9 @@ namespace EC_ADVCopy
 
             Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.sel);
             Logger.LogMessage("Paste " + GetCharaName(m_tmpCopyIndex) + " into " + GetCharaName(ctrl.chaID));
-            ADVCreate.ADVPartUICtrl.Instance.ReloadCut();
+
+            m_chUI.Adapt(); //CharStateのデータをキャラに反映
+            //ADVCreate.ADVPartUICtrl.Instance.ReloadCut();
         }
 
         public static string GetCharaName(int i)
@@ -180,7 +189,7 @@ namespace EC_ADVCopy
 
         public static void CopyCharState(HEdit.ADVPart.CharState cs_src, HEdit.ADVPart.CharState cs_dest)
         {
-            cs_dest.id = cs_src.id;
+            //cs_dest.id = cs_src.id;
             cs_dest.visible = cs_src.visible;
             cs_dest.posAndRot.pos = cs_src.posAndRot.pos;
             cs_dest.posAndRot.rot = cs_src.posAndRot.rot;
