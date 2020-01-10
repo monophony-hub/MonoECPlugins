@@ -2,7 +2,7 @@
 
 ## EC_SceneExport
 This plugin exports Parts of H-Scene into files, and imports from exported file.
-You can reuse parts of H-Scene.
+You can reuse ADV parts or H-parts.
 
 ## EC_ADVCopy
 This plugin copy & paste & swap chara info in ADV cut.
