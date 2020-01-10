@@ -1,5 +1,5 @@
 ﻿// 新しいBepinEx 5用には、以下のdefineを有効
-#define USE_BEPINEX_50
+//#define USE_BEPINEX_50
 
 using BepInEx;
 using BepInEx.Configuration;
