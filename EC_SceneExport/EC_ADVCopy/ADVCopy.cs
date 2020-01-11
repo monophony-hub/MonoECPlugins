@@ -22,7 +22,7 @@ namespace EC_ADVCopy
         public const string PluginNameInternal = "EC_ADVCopy";
         public const string GUID = "com.monophony.bepinex.advcopy";
         public const string PluginName = "ADV Copy";
-        public const string Version = "0.1";
+        public const string Version = "0.2";
 
 #if USE_BEPINEX_50
         public static ConfigEntry<KeyboardShortcut> m_CopyKey { get; private set; }
@@ -33,7 +33,10 @@ namespace EC_ADVCopy
         private bool bEnable = false;
         private HEdit.ADVPart.CharState m_tmpCharState = new HEdit.ADVPart.CharState();
         private int m_tmpCopyIndex = -1;
+
         private ADVPart.Manipulate.CharaUICtrl m_chUI;
+        private ADVPart.Manipulate.EffectUICtrl m_effectUICtrl;
+        private ADVPart.Manipulate.TextUICtrl m_textUICtrl;
 
         internal void Awake()
         {
@@ -44,7 +47,9 @@ namespace EC_ADVCopy
                 if (_scene.name == SceneName_HEditScene)
                 {
                     bEnable = true;
-                    m_chUI = (ADVPart.Manipulate.CharaUICtrl)GameObject.FindObjectOfType(typeof(ADVPart.Manipulate.CharaUICtrl));
+                    m_chUI = GameObject.FindObjectOfType<ADVPart.Manipulate.CharaUICtrl>();
+                    m_effectUICtrl = GameObject.FindObjectOfType<ADVPart.Manipulate.EffectUICtrl>();
+                    m_textUICtrl = GameObject.FindObjectOfType<ADVPart.Manipulate.TextUICtrl>();
                 }
             };
 
@@ -115,29 +120,108 @@ namespace EC_ADVCopy
 
         private void Copy()
         {
+            if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return;     // ADV編集モードが停止中
+
+            if (CopyEffect()) return;
+            if (CopyChara()) return;
+        }
+
+        private void Paste()
+        {
+            if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return;     // ADV編集モードが停止中
+
+            if (PasteEffect()) return;
+            if (PasteChara()) return;
+        }
+
+        private void Swap()
+        {
+            if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return;     // ADV編集モードが停止中
+
+            if (SwapChara()) return;
+        }
+
+        int m_copyKind = -1;
+
+        HEdit.ADVPart.ScreenEffect m_sf = new HEdit.ADVPart.ScreenEffect();
+        HEdit.ADVPart.SpeechBubbles m_sb = new HEdit.ADVPart.SpeechBubbles();
+
+        private bool CopyEffect()
+        {
+            var so = ADVCreate.ADVPartUICtrl.Instance.sortOrder;
+            if (so == null) return false;
+
+            if (so.kind == 1)
+            {
+                Logger.LogDebug("Copy Effect");
+                m_sf.Copy((HEdit.ADVPart.ScreenEffect)so);
+            }
+            else
+            {
+                Logger.LogDebug("Copy Speech Bubble");
+                m_sb.Copy((HEdit.ADVPart.SpeechBubbles)so);
+            }
+            m_copyKind = so.kind;
+
+            Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.sel);
+            return true;
+        }
+
+        private bool PasteEffect()
+        {
+            var so = ADVCreate.ADVPartUICtrl.Instance.sortOrder;
+
+            if (so == null) return false;
+            if (m_copyKind == -1) return false;
+
+            if (m_copyKind == 1)
+            {
+                Logger.LogDebug("Paste Effect");
+                var sf = new HEdit.ADVPart.ScreenEffect(this.m_sf);
+                m_effectUICtrl.AddEffect(sf, false);
+
+                ADVCreate.ADVPartUICtrl.Instance.sortOrder = sf;
+                m_effectUICtrl.UpdateUI();
+            }
+            else
+            {
+                Logger.LogDebug("Paste SpeechBubble");
+                var sb = new HEdit.ADVPart.SpeechBubbles(this.m_sb);
+                m_textUICtrl.AddText(sb, false);
+
+                ADVCreate.ADVPartUICtrl.Instance.sortOrder = sb;
+                m_textUICtrl.UpdateUI();
+            }
+
+            Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.sel);
+            return true;
+        }
+
+        private bool CopyChara()
+        {
             Logger.LogDebug("Copy");
 
-            if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return;     // ADV編集モードが停止中
             ChaControl ctrl = ADVCreate.ADVPartUICtrl.Instance.chaControl;
-            if (ctrl == null) return;
+            if (ctrl == null) return false;
 
             CopyCharState(ADVCreate.ADVPartUICtrl.Instance.cut.charStates[ctrl.chaID], m_tmpCharState);
             m_tmpCopyIndex = ctrl.chaID;
 
             Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.sel);
             Logger.LogMessage("Copy " + GetCharaName(m_tmpCopyIndex));
+
+            return true;
         }
 
-        private void Swap()
+        private bool SwapChara()
         {
             Logger.LogDebug("Swap");
 
-            if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return;     // ADV編集モードが停止中
             ChaControl ctrl = ADVCreate.ADVPartUICtrl.Instance.chaControl;
-            if (ctrl == null) return;
+            if (ctrl == null) return false;
 
-            if (m_tmpCopyIndex < 0) return;
-            if (m_tmpCopyIndex == ctrl.chaID) return;
+            if (m_tmpCopyIndex < 0) return false;
+            if (m_tmpCopyIndex == ctrl.chaID) return false;
 
             var tmpState = new HEdit.ADVPart.CharState();
 
@@ -149,18 +233,19 @@ namespace EC_ADVCopy
             Logger.LogMessage("Swap " + GetCharaName(m_tmpCopyIndex) + " and " + GetCharaName(ctrl.chaID));
 
             m_chUI.Adapt(); //CharStateのデータをキャラに反映
-            //ADVCreate.ADVPartUICtrl.Instance.ReloadCut();
+
+            return true;
         }
 
-        private void Paste()
+        private bool PasteChara()
         {
             Logger.LogDebug("Paste");
 
-            if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return;     // ADV編集モードが停止中
+            if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return false;     // ADV編集モードが停止中
             ChaControl ctrl = ADVCreate.ADVPartUICtrl.Instance.chaControl;
-            if (ctrl == null) return;
+            if (ctrl == null) return false;
 
-            if (m_tmpCopyIndex < 0) return;
+            if (m_tmpCopyIndex < 0) return false;
 
             CopyCharState(m_tmpCharState, ctrl.chaID);
 
@@ -169,6 +254,7 @@ namespace EC_ADVCopy
 
             m_chUI.Adapt(); //CharStateのデータをキャラに反映
             //ADVCreate.ADVPartUICtrl.Instance.ReloadCut();
+            return true;
         }
 
         public static string GetCharaName(int i)

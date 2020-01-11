@@ -75,7 +75,7 @@ namespace EC_SceneExport
         internal void Start()
         {
 #if USE_BEPINEX_50
-            EnablePlugin = Config.Bind("Config", "Enable chara remove", true, "");
+            EnablePlugin = Config.Bind("Config", "Enable", true, "Enable this plugin");
             PartsExportHotkey = Config.Bind("Config", "Export Parts", new KeyboardShortcut(KeyCode.E, new KeyCode[] { KeyCode.LeftControl }), "Export all currently loaded parts in the game.");
             PartsImportHotkey = Config.Bind("Config", "Import Parts", new KeyboardShortcut(KeyCode.I, new KeyCode[] { KeyCode.LeftControl }), "Import all files in the exported folder.");
             EnableCharaRemove = Config.Bind("Config", "Enable chara remove (Experimental)", false, "If the importing ADV part over characters, delete the characters.");
