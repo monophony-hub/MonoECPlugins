@@ -37,6 +37,7 @@ namespace EC_ADVCopy
         private ADVPart.Manipulate.CharaUICtrl m_chUI;
         private ADVPart.Manipulate.EffectUICtrl m_effectUICtrl;
         private ADVPart.Manipulate.TextUICtrl m_textUICtrl;
+        private ADVPart.List.ListUICtrl m_listUICtrl;
 
         internal void Awake()
         {
@@ -50,6 +51,7 @@ namespace EC_ADVCopy
                     m_chUI = GameObject.FindObjectOfType<ADVPart.Manipulate.CharaUICtrl>();
                     m_effectUICtrl = GameObject.FindObjectOfType<ADVPart.Manipulate.EffectUICtrl>();
                     m_textUICtrl = GameObject.FindObjectOfType<ADVPart.Manipulate.TextUICtrl>();
+                    m_listUICtrl = GameObject.FindObjectOfType<ADVPart.List.ListUICtrl>();
                 }
             };
 
@@ -124,6 +126,7 @@ namespace EC_ADVCopy
 
             if (CopyEffect()) return;
             if (CopyChara()) return;
+            if (CopyCut()) return;
         }
 
         private void Paste()
@@ -132,6 +135,7 @@ namespace EC_ADVCopy
 
             if (PasteEffect()) return;
             if (PasteChara()) return;
+            if (PasteCut()) return;
         }
 
         private void Swap()
@@ -163,6 +167,7 @@ namespace EC_ADVCopy
             }
             m_copyKind = so.kind;
 
+            Logger.LogMessage("Copy effect");
             Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.sel);
             return true;
         }
@@ -193,6 +198,53 @@ namespace EC_ADVCopy
                 m_textUICtrl.UpdateUI();
             }
 
+            Logger.LogMessage("Paste effect");
+            Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.sel);
+            return true;
+        }
+
+        HEdit.ADVPart.Cut m_cut;
+
+        private bool CopyCut()
+        {
+            if (ADVCreate.ADVPartUICtrl.Instance.cut == null) return false;
+
+            // 誤動作防止 
+            // エフェクトが選ばれているときは動作しない
+            if (ADVCreate.ADVPartUICtrl.Instance.sortOrder != null) return false;
+
+            // キャラが選ばれているときは動作しない
+            if (ADVCreate.ADVPartUICtrl.Instance.chaControl != null) return false;
+
+            m_cut = new HEdit.ADVPart.Cut(ADVCreate.ADVPartUICtrl.Instance.cut);
+            m_cut.endCut = false;
+            foreach (HEdit.ADVPart.SpeechBubbles speechBubbles in m_cut.speechBubbles)
+            {
+                speechBubbles.option = false;
+            }
+
+            Logger.LogMessage("Copy cut");
+            Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.sel);
+            return true;
+        }
+
+        private bool PasteCut()
+        {
+            if (m_cut == null) return false;
+            if (ADVCreate.ADVPartUICtrl.Instance.cut == null) return false;
+
+            // 誤動作防止 
+            // エフェクトが選ばれているときは動作しない
+            if (ADVCreate.ADVPartUICtrl.Instance.sortOrder != null) return false;
+
+            // キャラが選ばれているときは動作しない
+            if (ADVCreate.ADVPartUICtrl.Instance.chaControl != null) return false;
+
+
+            ADVCreate.ADVPartUICtrl.Instance.cut.Copy(this.m_cut);
+            ADVCreate.ADVPartUICtrl.Instance.ReloadCut();
+
+            Logger.LogMessage("Paste cut");
             Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.sel);
             return true;
         }
@@ -203,6 +255,10 @@ namespace EC_ADVCopy
 
             ChaControl ctrl = ADVCreate.ADVPartUICtrl.Instance.chaControl;
             if (ctrl == null) return false;
+
+            // 誤動作防止 
+            // エフェクトが選ばれているときは動作しない
+            if (ADVCreate.ADVPartUICtrl.Instance.sortOrder != null) return false;
 
             CopyCharState(ADVCreate.ADVPartUICtrl.Instance.cut.charStates[ctrl.chaID], m_tmpCharState);
             m_tmpCopyIndex = ctrl.chaID;
@@ -219,6 +275,10 @@ namespace EC_ADVCopy
 
             ChaControl ctrl = ADVCreate.ADVPartUICtrl.Instance.chaControl;
             if (ctrl == null) return false;
+
+            // 誤動作防止 
+            // エフェクトが選ばれているときは動作しない
+            if (ADVCreate.ADVPartUICtrl.Instance.sortOrder != null) return false;
 
             if (m_tmpCopyIndex < 0) return false;
             if (m_tmpCopyIndex == ctrl.chaID) return false;
@@ -241,9 +301,12 @@ namespace EC_ADVCopy
         {
             Logger.LogDebug("Paste");
 
-            if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return false;     // ADV編集モードが停止中
             ChaControl ctrl = ADVCreate.ADVPartUICtrl.Instance.chaControl;
             if (ctrl == null) return false;
+
+            // 誤動作防止 
+            // エフェクトが選ばれているときは動作しない
+            if (ADVCreate.ADVPartUICtrl.Instance.sortOrder != null) return false;
 
             if (m_tmpCopyIndex < 0) return false;
 
