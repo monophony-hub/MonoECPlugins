@@ -60,7 +60,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ADVCopy.Chara.cs" />
     <Compile Include="ADVCopy.cs" />
+    <Compile Include="ADVCopy.Cut.cs" />
+    <Compile Include="ADVCopy.Effect.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
