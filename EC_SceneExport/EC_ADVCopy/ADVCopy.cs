@@ -1,5 +1,5 @@
 ﻿// 新しいBepinEx 5用には、以下のdefineを有効
-//#define USE_BEPINEX_50
+// USE_BEPINEX_50
 
 using System;
 using System.Collections.Generic;
@@ -8,9 +8,11 @@ using System.Text;
 using System.Threading.Tasks;
 using BepInEx;
 using BepInEx.Configuration;
+
 #if USE_BEPINEX_50
 using HarmonyLib;
 #endif
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -27,6 +29,7 @@ namespace EC_ADVCopy
 #if USE_BEPINEX_50
         public static ConfigEntry<KeyboardShortcut> m_CopyKey { get; private set; }
         public static ConfigEntry<KeyboardShortcut> m_PasteKey { get; private set; }
+        public static ConfigEntry<KeyboardShortcut> m_PasteEffectKey { get; private set; }
         public static ConfigEntry<KeyboardShortcut> m_PasteCutKey { get; private set; }
         public static ConfigEntry<KeyboardShortcut> m_SwapKey { get; private set; }
         public static ConfigEntry<bool> m_enablePlugin { get; private set; }
@@ -40,6 +43,10 @@ namespace EC_ADVCopy
         private ADVPart.List.ListUICtrl m_listUICtrl;
 
         const int INIT = -1;
+
+        const int MAIN_TAB_CUT = 0;
+        const int MAIN_TAB_EFFECT = 1;
+        const int MAIN_TAB_PART = 2;
 
         internal void Awake()
         {
@@ -70,10 +77,11 @@ namespace EC_ADVCopy
         {
 #if USE_BEPINEX_50
             m_enablePlugin = Config.Bind("Config", "Enable", true, "Enable this plugin");
-            m_CopyKey = Config.Bind("Keyboard Shortcuts", "Copy", new KeyboardShortcut(KeyCode.C, new KeyCode[] { KeyCode.LeftAlt }), "Copy chara info.");
-            m_PasteKey = Config.Bind("Keyboard Shortcuts", "Paste", new KeyboardShortcut(KeyCode.V, new KeyCode[] { KeyCode.LeftAlt }), "Paste chara info.");
-            m_PasteCutKey = Config.Bind("Keyboard Shortcuts", "Paste", new KeyboardShortcut(KeyCode.B, new KeyCode[] { KeyCode.LeftAlt }), "Paste chara info.");
-            m_SwapKey = Config.Bind("Keyboard Shortcuts", "Swap", new KeyboardShortcut(KeyCode.S, new KeyCode[] { KeyCode.LeftAlt }), "Swwap chara info.");
+            m_CopyKey = Config.Bind("Keyboard Shortcuts", "Copy", new KeyboardShortcut(KeyCode.C, new KeyCode[] { KeyCode.LeftAlt }), "Copy chara/effect/cut.");
+            m_PasteKey = Config.Bind("Keyboard Shortcuts", "Paste", new KeyboardShortcut(KeyCode.V, new KeyCode[] { KeyCode.LeftAlt }), "Paste chara.");
+            m_PasteEffectKey = Config.Bind("Keyboard Shortcuts", "Paste effect", new KeyboardShortcut(KeyCode.V, new KeyCode[] { KeyCode.LeftAlt }), "Paste effect.");
+            m_PasteCutKey = Config.Bind("Keyboard Shortcuts", "Paste cut", new KeyboardShortcut(KeyCode.V, new KeyCode[] { KeyCode.LeftAlt }), "Paste cut.");
+            m_SwapKey = Config.Bind("Keyboard Shortcuts", "Swap", new KeyboardShortcut(KeyCode.S, new KeyCode[] { KeyCode.LeftAlt }), "Swwap chara.");
 #endif
         }
 
@@ -87,17 +95,32 @@ namespace EC_ADVCopy
 
 #if USE_BEPINEX_50
             if (m_CopyKey.Value.IsDown())
-                SafeAction(Copy);
+            {
+                if (SafeAction(Copy)) return;
+            }
 
             if (m_SwapKey.Value.IsDown())
-                SafeAction(Swap);
+            {
+                if (SafeAction(SwapChara)) return;
+            }
+
+            // エフェクト、キャラ、カットのキーバインドが同じ場合、
+            // エフェクト、キャラ、カットの順で優先的に処理する。
+            // 1か所でも処理が終わればreturn
+            if (m_PasteEffectKey.Value.IsDown())
+            {
+                if (SafeAction(PasteEffect)) return;
+            }
 
             if (m_PasteKey.Value.IsDown())
-                SafeAction(Paste);
+            {
+                if (SafeAction(PasteChara)) return;
+            }
 
             if (m_PasteCutKey.Value.IsDown())
-                SafeAction(Paste2);
-
+            {
+                if (SafeAction(PasteCut)) return;
+            }
 #else
             if (!Input.GetKey(KeyCode.LeftAlt)) return;
 
@@ -107,24 +130,23 @@ namespace EC_ADVCopy
             }
             else if (Input.GetKeyDown(KeyCode.S))
             {
-                this.SafeAction(Swap);
+                this.SafeAction(SwapChara);
             }
             else if (Input.GetKeyDown(KeyCode.V))
             {
-                this.SafeAction(Paste);
-            }
-            else if (Input.GetKeyDown(KeyCode.B))
-            {
-                this.SafeAction(Paste2);
+                if (this.SafeAction(PasteEffect)) return;
+                if (this.SafeAction(PasteChara)) return;
+                if (this.SafeAction(PasteCut)) return;
             }
 #endif
         }
 
-        private void SafeAction(Action _action)
+        private bool SafeAction(Func<bool> _action)
         {
             try
             {
-                _action();
+                if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return false;     // ADV編集モードが停止中
+                return _action();
             }
             catch (Exception ex)
             {
@@ -134,34 +156,13 @@ namespace EC_ADVCopy
             }
         }
 
-        private void Copy()
+        private bool Copy()
         {
-            if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return;     // ADV編集モードが停止中
+            if (CopyEffect()) return true;
+            if (CopyChara()) return true;
+            if (CopyCut()) return true;
 
-            if (CopyEffect()) return;
-            if (CopyChara()) return;
-            if (CopyCut()) return;
+            return false;
         }
-
-        private void Paste()
-        {
-            if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return;     // ADV編集モードが停止中
-
-            if (PasteEffect()) return;
-            if (PasteChara()) return;
-        }
-
-        private void Paste2()
-        {
-            if (PasteCut()) return;
-        }
-
-        private void Swap()
-        {
-            if (ADVCreate.ADVPartUICtrl.Instance.pause == true) return;     // ADV編集モードが停止中
-
-            if (SwapChara()) return;
-        }
-
     }
 }

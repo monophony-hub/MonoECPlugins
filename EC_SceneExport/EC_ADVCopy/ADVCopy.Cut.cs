@@ -1,13 +1,20 @@
-﻿using System;
+﻿// 新しいBepinEx 5用には、以下のdefineを有効
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+#if USE_BEPINEX_50
+using HarmonyLib;
+#endif
+
 namespace EC_ADVCopy
 {
     public partial class ADVCopy
     {
+        const int CUT_LIMIT = 50;
         private HEdit.ADVPart.Cut m_cut;
 
         private bool CopyCut()
@@ -21,6 +28,10 @@ namespace EC_ADVCopy
             // キャラが選ばれているときは動作しない
             if (ADVCreate.ADVPartUICtrl.Instance.chaControl != null) return false;
 
+#if USE_BEPINEX_50
+            // 右側のメインタブでカットが選ばれているときのみ
+            if (Traverse.Create(m_listUICtrl).Field<int>("mainTab").Value != MAIN_TAB_CUT) return false;
+#endif
             m_cut = new HEdit.ADVPart.Cut(ADVCreate.ADVPartUICtrl.Instance.cut);
 
             // エンドカットにはしない
@@ -48,12 +59,20 @@ namespace EC_ADVCopy
             // キャラが選ばれているときは動作しない
             if (ADVCreate.ADVPartUICtrl.Instance.chaControl != null) return false;
 
+#if USE_BEPINEX_50
+            // 右側のメインタブでカットが選ばれているときのみ
+            if (Traverse.Create(m_listUICtrl).Field<int>("mainTab").Value != MAIN_TAB_CUT) return false;
+#endif
+
             // 貼り付け先のカットのキャラ人数が、コピー元と異なる場合は、貼り付けない
             if (this.m_cut.charStates.Count != ADVCreate.ADVPartUICtrl.Instance.cut.charStates.Count)
             {
                 this.m_cut = null;
                 return false;
             }
+
+            // カット 上限チェック
+            if (ADVCreate.ADVPartUICtrl.Instance.advPart.cuts.Count >= CUT_LIMIT) return false;
 
             // カット追加。
             // この際、ADVCreate.ADVPartUICtrl.Instance.cutには今のCutがコピーされた新しいCutインスタンスが入る
