@@ -8,7 +8,9 @@ using System.Text;
 using System.Threading.Tasks;
 using BepInEx;
 using BepInEx.Configuration;
+#if USE_BEPINEX_50
 using HarmonyLib;
+#endif
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -25,7 +27,9 @@ namespace EC_ADVCopy
 #if USE_BEPINEX_50
         public static ConfigEntry<KeyboardShortcut> m_CopyKey { get; private set; }
         public static ConfigEntry<KeyboardShortcut> m_PasteKey { get; private set; }
+        public static ConfigEntry<KeyboardShortcut> m_PasteCutKey { get; private set; }
         public static ConfigEntry<KeyboardShortcut> m_SwapKey { get; private set; }
+        public static ConfigEntry<bool> m_enablePlugin { get; private set; }
 #endif
         private const String SceneName_HEditScene = "HEditScene";
         private bool bEnable = false;
@@ -65,16 +69,21 @@ namespace EC_ADVCopy
         internal void Start()
         {
 #if USE_BEPINEX_50
+            m_enablePlugin = Config.Bind("Config", "Enable", true, "Enable this plugin");
             m_CopyKey = Config.Bind("Keyboard Shortcuts", "Copy", new KeyboardShortcut(KeyCode.C, new KeyCode[] { KeyCode.LeftAlt }), "Copy chara info.");
             m_PasteKey = Config.Bind("Keyboard Shortcuts", "Paste", new KeyboardShortcut(KeyCode.V, new KeyCode[] { KeyCode.LeftAlt }), "Paste chara info.");
+            m_PasteCutKey = Config.Bind("Keyboard Shortcuts", "Paste", new KeyboardShortcut(KeyCode.B, new KeyCode[] { KeyCode.LeftAlt }), "Paste chara info.");
             m_SwapKey = Config.Bind("Keyboard Shortcuts", "Swap", new KeyboardShortcut(KeyCode.S, new KeyCode[] { KeyCode.LeftAlt }), "Swwap chara info.");
 #endif
         }
 
         internal void Update()
         {
+#if USE_BEPINEX_50
+            if (m_enablePlugin.Value == false) return;
+#endif
+
             if (bEnable == false) return;
-            //            if (m_nodeSettingCanvas.CgNode.interactable == false) return;
 
 #if USE_BEPINEX_50
             if (m_CopyKey.Value.IsDown())
@@ -85,6 +94,9 @@ namespace EC_ADVCopy
 
             if (m_PasteKey.Value.IsDown())
                 SafeAction(Paste);
+
+            if (m_PasteCutKey.Value.IsDown())
+                SafeAction(Paste2);
 
 #else
             if (!Input.GetKey(KeyCode.LeftAlt)) return;
@@ -100,6 +112,10 @@ namespace EC_ADVCopy
             else if (Input.GetKeyDown(KeyCode.V))
             {
                 this.SafeAction(Paste);
+            }
+            else if (Input.GetKeyDown(KeyCode.B))
+            {
+                this.SafeAction(Paste2);
             }
 #endif
         }
@@ -133,6 +149,10 @@ namespace EC_ADVCopy
 
             if (PasteEffect()) return;
             if (PasteChara()) return;
+        }
+
+        private void Paste2()
+        {
             if (PasteCut()) return;
         }
 
