@@ -1,11 +1,5 @@
 ﻿// 新しいBepinEx 5用には、以下のdefineを有効
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 #if USE_BEPINEX_50
 using HarmonyLib;
 #endif

@@ -18,10 +18,6 @@ namespace EC_ADVCopy
             ChaControl ctrl = ADVCreate.ADVPartUICtrl.Instance.chaControl;
             if (ctrl == null) return false;
 
-            // 誤動作防止 
-            // エフェクトが選ばれているときは動作しない
-            if (ADVCreate.ADVPartUICtrl.Instance.sortOrder != null) return false;
-
             CopyCharState(ADVCreate.ADVPartUICtrl.Instance.cut.charStates[ctrl.chaID], m_tmpCharState);
             m_tmpCopyIndex = ctrl.chaID;
 
@@ -37,10 +33,6 @@ namespace EC_ADVCopy
 
             ChaControl ctrl = ADVCreate.ADVPartUICtrl.Instance.chaControl;
             if (ctrl == null) return false;
-
-            // 誤動作防止 
-            // エフェクトが選ばれているときは動作しない
-            if (ADVCreate.ADVPartUICtrl.Instance.sortOrder != null) return false;
 
             if (m_tmpCopyIndex == INIT) return false;
 
@@ -60,10 +52,6 @@ namespace EC_ADVCopy
 
             ChaControl ctrl = ADVCreate.ADVPartUICtrl.Instance.chaControl;
             if (ctrl == null) return false;
-
-            // 誤動作防止 
-            // エフェクトが選ばれているときは動作しない
-            if (ADVCreate.ADVPartUICtrl.Instance.sortOrder != null) return false;
 
             if (m_tmpCopyIndex < 0) return false;
             if (m_tmpCopyIndex == ctrl.chaID) return false;

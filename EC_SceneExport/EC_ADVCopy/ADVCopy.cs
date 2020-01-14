@@ -2,12 +2,7 @@
 // USE_BEPINEX_50
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using BepInEx;
-using BepInEx.Configuration;
 
 #if USE_BEPINEX_50
 using HarmonyLib;
@@ -38,9 +33,13 @@ namespace EC_ADVCopy
         private bool bEnable = false;
 
         private ADVPart.Manipulate.CharaUICtrl m_chUI;
+        private ADVPart.Manipulate.ItemUICtrl m_itemUI;
         private ADVPart.Manipulate.EffectUICtrl m_effectUICtrl;
         private ADVPart.Manipulate.TextUICtrl m_textUICtrl;
         private ADVPart.List.ListUICtrl m_listUICtrl;
+
+        private UnityEngine.UI.Toggle m_charaToggle;
+        private UnityEngine.UI.Toggle m_itemToggle;
 
         const int INIT = -1;
 
@@ -61,6 +60,14 @@ namespace EC_ADVCopy
                     m_effectUICtrl = GameObject.FindObjectOfType<ADVPart.Manipulate.EffectUICtrl>();
                     m_textUICtrl = GameObject.FindObjectOfType<ADVPart.Manipulate.TextUICtrl>();
                     m_listUICtrl = GameObject.FindObjectOfType<ADVPart.List.ListUICtrl>();
+                    m_itemUI = GameObject.FindObjectOfType<ADVPart.Manipulate.ItemUICtrl>();
+
+                    var chBtn = GameObject.Find("ADVPart/Canvas ADVPart/Manipulate/Button Root/Button Chara");
+                    m_charaToggle = chBtn.GetComponent<UnityEngine.UI.Toggle>();
+
+                    var itemBtn = GameObject.Find("ADVPart/Canvas ADVPart/Manipulate/Button Root/Button Item");
+                    m_itemToggle = itemBtn.GetComponent<UnityEngine.UI.Toggle>();
+
                 }
             };
 
@@ -135,7 +142,19 @@ namespace EC_ADVCopy
             else if (Input.GetKeyDown(KeyCode.V))
             {
                 if (this.SafeAction(PasteEffect)) return;
-                if (this.SafeAction(PasteChara)) return;
+
+                if (this.m_itemToggle.isOn)
+                {
+                    this.SafeAction(PasteItem);
+                    return;
+                }
+
+                if (this.m_charaToggle.isOn)
+                {
+                    this.SafeAction(PasteChara);
+                    return;
+                }
+
                 if (this.SafeAction(PasteCut)) return;
             }
 #endif
@@ -159,7 +178,19 @@ namespace EC_ADVCopy
         private bool Copy()
         {
             if (CopyEffect()) return true;
-            if (CopyChara()) return true;
+
+            if (this.m_itemToggle.isOn)
+            {
+                CopyItem();
+                return true;
+            }
+
+            if (this.m_charaToggle.isOn)
+            {
+                CopyChara();
+                return true;
+            }
+
             if (CopyCut()) return true;
 
             return false;
