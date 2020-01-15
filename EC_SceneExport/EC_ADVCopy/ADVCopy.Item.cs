@@ -6,10 +6,7 @@
 
         private bool CopyItem()
         {
-            int idx = this.m_itemUI.selectIndex;
-
-            if (idx == INIT) return false;
-
+            if (this.m_itemUI.selectIndex == INIT) return false;
             if (this.m_itemUI.itemState == null) return false;
 
             this.m_itemState = new HEdit.ADVPart.ItemState(this.m_itemUI.itemState);
@@ -22,11 +19,9 @@
 
         private bool PasteItem()
         {
-            int idx = this.m_itemUI.selectIndex;
-
-            if (idx == INIT) return false;
-
+            if (this.m_itemUI.selectIndex == INIT) return false;
             if (this.m_itemUI.itemState == null) return false;
+            if (this.m_itemState == null) return false;
 
             var itemStateTmp = new HEdit.ADVPart.ItemState(this.m_itemState);
 

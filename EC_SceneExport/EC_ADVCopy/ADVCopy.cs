@@ -40,6 +40,8 @@ namespace EC_ADVCopy
 
         private UnityEngine.UI.Toggle m_charaToggle;
         private UnityEngine.UI.Toggle m_itemToggle;
+        private UnityEngine.UI.Toggle m_cutToggle;
+        private UnityEngine.UI.Toggle m_textToggle;
 
         const int INIT = -1;
 
@@ -65,8 +67,14 @@ namespace EC_ADVCopy
                     var chBtn = GameObject.Find("ADVPart/Canvas ADVPart/Manipulate/Button Root/Button Chara");
                     m_charaToggle = chBtn.GetComponent<UnityEngine.UI.Toggle>();
 
-                    var itemBtn = GameObject.Find("ADVPart/Canvas ADVPart/Manipulate/Button Root/Button Item");
-                    m_itemToggle = itemBtn.GetComponent<UnityEngine.UI.Toggle>();
+                    var itemBtn   = GameObject.Find("ADVPart/Canvas ADVPart/Manipulate/Button Root/Button Item");
+                    m_itemToggle  = itemBtn.GetComponent<UnityEngine.UI.Toggle>();
+
+                    var cutBtn    = GameObject.Find("ADVPart/Canvas ADVPart/List/List Tab/Button Cut");
+                    m_cutToggle   = cutBtn.GetComponent<UnityEngine.UI.Toggle>();
+
+                    var textBtn   = GameObject.Find("ADVPart/Canvas ADVPart/List/List Tab/Button Text");
+                    m_textToggle  = textBtn.GetComponent<UnityEngine.UI.Toggle>();
 
                 }
             };
@@ -137,11 +145,18 @@ namespace EC_ADVCopy
             }
             else if (Input.GetKeyDown(KeyCode.S))
             {
-                this.SafeAction(SwapChara);
+                if (this.m_charaToggle.isOn)
+                {
+                    this.SafeAction(SwapChara);
+                }
             }
             else if (Input.GetKeyDown(KeyCode.V))
             {
-                if (this.SafeAction(PasteEffect)) return;
+                if (this.m_textToggle.isOn)
+                {
+                    this.SafeAction(PasteEffect);
+                    return;
+                }
 
                 if (this.m_itemToggle.isOn)
                 {
@@ -155,7 +170,10 @@ namespace EC_ADVCopy
                     return;
                 }
 
-                if (this.SafeAction(PasteCut)) return;
+                if (this.m_cutToggle.isOn) {
+                    this.SafeAction(PasteCut);
+                    return;
+                }
             }
 #endif
         }
@@ -177,7 +195,11 @@ namespace EC_ADVCopy
 
         private bool Copy()
         {
-            if (CopyEffect()) return true;
+            if (this.m_textToggle.isOn)
+            {
+                CopyEffect();
+                return true;
+            }
 
             if (this.m_itemToggle.isOn)
             {
@@ -191,7 +213,11 @@ namespace EC_ADVCopy
                 return true;
             }
 
-            if (CopyCut()) return true;
+            if (this.m_cutToggle.isOn)
+            {
+                CopyCut();
+                return true;
+            }
 
             return false;
         }

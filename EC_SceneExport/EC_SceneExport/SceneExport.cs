@@ -1,5 +1,5 @@
 ﻿// 新しいBepinEx 5用には、以下のdefineを有効
-#define USE_BEPINEX_50
+//#define USE_BEPINEX_50
 
 using BepInEx;
 using BepInEx.Configuration;
@@ -57,19 +57,14 @@ namespace EC_SceneExport
                 }
             };
 
-            SceneManager.activeSceneChanged += (_s1, _s2) =>
+            SceneManager.sceneLoaded += (_scene, _mode) =>
             {
-                Logger.LogDebug("activeSceneChanged:" + _s2.name);
-                if (_s2.name == SceneName_HEditScene)
+                Logger.LogDebug("loaded:" + _scene.name);
+                if (_scene.name == SceneName_HEditScene)
                 {
                     bEnable = true;
                 }
-                else
-                {
-                    bEnable = false;
-                }
             };
-
         }
 
         internal void Start()
@@ -128,6 +123,9 @@ namespace EC_SceneExport
         private void ExportParts()
         {
             Logger.LogDebug("Start export");
+
+            var node = GameObject.FindObjectOfType<HEdit.NodeSettingCanvas>();
+            if (node == null) return;
 
             if (!Directory.Exists(ExportPath))
             {
@@ -190,6 +188,9 @@ namespace EC_SceneExport
         private void ImportParts()
         {
             Logger.LogDebug("Start import");
+
+            var node = GameObject.FindObjectOfType<HEdit.NodeSettingCanvas>();
+            if (node == null) return;
 
             if (!Directory.Exists(ExportPath))
             {
