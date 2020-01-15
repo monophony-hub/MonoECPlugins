@@ -6,6 +6,7 @@
 
         private bool CopyItem()
         {
+#if false
             if (this.m_itemUI.selectIndex == INIT) return false;
             if (this.m_itemUI.itemState == null) return false;
 
@@ -14,11 +15,13 @@
             Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.sel);
             Logger.LogMessage("Copy item");
 
+#endif
             return true;
         }
 
         private bool PasteItem()
         {
+#if false
             if (this.m_itemUI.selectIndex == INIT) return false;
             if (this.m_itemUI.itemState == null) return false;
             if (this.m_itemState == null) return false;
@@ -31,10 +34,9 @@
 
             this.m_itemUI.Adapt();
             this.m_itemUI.UpdateUI();
-
             Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.sel);
             Logger.LogMessage("Paste item");
-
+#endif
             return true;
         }
     }
