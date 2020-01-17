@@ -42,8 +42,7 @@ namespace EC_SceneExport
 
         private const String SceneName_HEditScene = "HEditScene";
 
-        private static bool bEnable = false;
-
+        // Used by the Unity Engine Scripting API
         internal void Awake()
         {
             Logger.LogDebug("Awake");
@@ -53,7 +52,8 @@ namespace EC_SceneExport
                 Logger.LogDebug("unloaded:" + _scene.name);
                 if (_scene.name == SceneName_HEditScene)
                 {
-                    bEnable = false;
+                    // プラグイン無効
+                    this.enabled = false;
                 }
             };
 
@@ -62,11 +62,13 @@ namespace EC_SceneExport
                 Logger.LogDebug("loaded:" + _scene.name);
                 if (_scene.name == SceneName_HEditScene)
                 {
-                    bEnable = true;
+                    // プラグイン有効
+                    this.enabled = true;
                 }
             };
         }
 
+        // Used by the Unity Engine Scripting API
         internal void Start()
         {
 #if USE_BEPINEX_50
@@ -75,14 +77,16 @@ namespace EC_SceneExport
             PartsImportHotkey = Config.Bind("Config", "Import Parts", new KeyboardShortcut(KeyCode.I, new KeyCode[] { KeyCode.LeftControl }), "Import all files in the exported folder.");
             EnableCharaRemove = Config.Bind("Config", "Enable chara remove (Experimental)", false, "If the importing ADV part over characters, delete the characters.");
 #endif
+            // プラグイン無効
+            this.enabled = false;
         }
 
+        // Used by the Unity Engine Scripting API
         internal void Update()
         {
 #if USE_BEPINEX_50
             if (EnablePlugin.Value == false) return;
 #endif
-            if (bEnable == false) return;
 
 #if USE_BEPINEX_50
             if (PartsExportHotkey.Value.IsDown())
@@ -146,11 +150,7 @@ namespace EC_SceneExport
                 string partName = _nodeUI.nodeBase.name;
 
                 // Kindを文字列にする
-                string strKind = "H";
-                if (keyValuePair.Value.kind == PART_KIND_ADV)
-                {
-                    strKind = "ADV";
-                }
+                string strKind = (keyValuePair.Value.kind == PART_KIND_ADV)? "ADV" : "H";
 
                 string fileName = HEditData.Instance.info.title + "_" + partCount + "_" + strKind + "_" + partName + "." + FileExtension;
                 string fullPath = Path.Combine(ExportPath, fileName);

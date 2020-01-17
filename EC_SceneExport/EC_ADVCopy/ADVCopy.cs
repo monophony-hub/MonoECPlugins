@@ -30,7 +30,6 @@ namespace EC_ADVCopy
         public static ConfigEntry<bool> m_enablePlugin { get; private set; }
 #endif
         private const String SceneName_HEditScene = "HEditScene";
-        private bool bEnable = false;
 
         private ADVPart.Manipulate.CharaUICtrl m_chUI;
         private ADVPart.Manipulate.ItemUICtrl m_itemUI;
@@ -43,12 +42,9 @@ namespace EC_ADVCopy
         private UnityEngine.UI.Toggle m_cutToggle;
         private UnityEngine.UI.Toggle m_textToggle;
 
-        const int INIT = -1;
+        private const int INIT = -1;
 
-        const int MAIN_TAB_CUT = 0;
-        const int MAIN_TAB_EFFECT = 1;
-        const int MAIN_TAB_PART = 2;
-
+        // Used by the Unity Engine Scripting API
         internal void Awake()
         {
             Logger.LogDebug("Awake");
@@ -57,7 +53,9 @@ namespace EC_ADVCopy
             {
                 if (_scene.name == SceneName_HEditScene)
                 {
-                    bEnable = true;
+                    // プラグイン有効
+                    this.enabled = true;
+
                     m_chUI = GameObject.FindObjectOfType<ADVPart.Manipulate.CharaUICtrl>();
                     m_effectUICtrl = GameObject.FindObjectOfType<ADVPart.Manipulate.EffectUICtrl>();
                     m_textUICtrl = GameObject.FindObjectOfType<ADVPart.Manipulate.TextUICtrl>();
@@ -75,7 +73,6 @@ namespace EC_ADVCopy
 
                     var textBtn   = GameObject.Find("ADVPart/Canvas ADVPart/List/List Tab/Button Text");
                     m_textToggle  = textBtn.GetComponent<UnityEngine.UI.Toggle>();
-
                 }
             };
 
@@ -83,11 +80,13 @@ namespace EC_ADVCopy
             {
                 if (_scene.name == SceneName_HEditScene)
                 {
-                    bEnable = false;
+                    // プラグイン無効
+                    this.enabled = false;
                 }
             };
         }
 
+        // Used by the Unity Engine Scripting API
         internal void Start()
         {
 #if USE_BEPINEX_50
@@ -98,15 +97,15 @@ namespace EC_ADVCopy
             m_PasteCutKey = Config.Bind("Keyboard Shortcuts", "Paste cut", new KeyboardShortcut(KeyCode.V, new KeyCode[] { KeyCode.LeftAlt }), "Paste cut.");
             m_SwapKey = Config.Bind("Keyboard Shortcuts", "Swap", new KeyboardShortcut(KeyCode.S, new KeyCode[] { KeyCode.LeftAlt }), "Swwap chara.");
 #endif
+            this.enabled = false;
         }
 
+        // Used by the Unity Engine Scripting API
         internal void Update()
         {
 #if USE_BEPINEX_50
             if (m_enablePlugin.Value == false) return;
 #endif
-
-            if (bEnable == false) return;
 
 #if USE_BEPINEX_50
             if (m_CopyKey.Value.IsDown())
@@ -145,35 +144,11 @@ namespace EC_ADVCopy
             }
             else if (Input.GetKeyDown(KeyCode.S))
             {
-                if (this.m_charaToggle.isOn)
-                {
-                    this.SafeAction(SwapChara);
-                }
+                this.SafeAction(SwapChara);
             }
             else if (Input.GetKeyDown(KeyCode.V))
             {
-                if (this.m_textToggle.isOn)
-                {
-                    this.SafeAction(PasteEffect);
-                    return;
-                }
-
-                if (this.m_itemToggle.isOn)
-                {
-                    this.SafeAction(PasteItem);
-                    return;
-                }
-
-                if (this.m_charaToggle.isOn)
-                {
-                    this.SafeAction(PasteChara);
-                    return;
-                }
-
-                if (this.m_cutToggle.isOn) {
-                    this.SafeAction(PasteCut);
-                    return;
-                }
+                this.SafeAction(Paste);
             }
 #endif
         }
@@ -221,5 +196,35 @@ namespace EC_ADVCopy
 
             return false;
         }
+
+        private bool Paste()
+        {
+            if (this.m_textToggle.isOn)
+            {
+                PasteEffect();
+                return true;
+            }
+
+            if (this.m_itemToggle.isOn)
+            {
+                PasteItem();
+                return true;
+            }
+
+            if (this.m_charaToggle.isOn)
+            {
+                PasteChara();
+                return true;
+            }
+
+            if (this.m_cutToggle.isOn)
+            {
+                PasteCut();
+                return true;
+            }
+
+            return false;
+        }
+
     }
 }

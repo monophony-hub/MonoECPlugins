@@ -50,6 +50,8 @@ namespace EC_ADVCopy
         {
             Logger.LogDebug("Swap");
 
+            if (!this.m_charaToggle.isOn) return false;
+
             ChaControl ctrl = ADVCreate.ADVPartUICtrl.Instance.chaControl;
             if (ctrl == null) return false;
 

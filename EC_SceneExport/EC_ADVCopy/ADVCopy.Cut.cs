@@ -1,9 +1,5 @@
 ﻿// 新しいBepinEx 5用には、以下のdefineを有効
 
-#if USE_BEPINEX_50
-using HarmonyLib;
-#endif
-
 namespace EC_ADVCopy
 {
     public partial class ADVCopy
@@ -15,17 +11,6 @@ namespace EC_ADVCopy
         {
             if (ADVCreate.ADVPartUICtrl.Instance.cut == null) return false;
 
-            // 誤動作防止 
-            // エフェクトが選ばれているときは動作しない
-            if (ADVCreate.ADVPartUICtrl.Instance.sortOrder != null) return false;
-
-            // キャラが選ばれているときは動作しない
-            if (ADVCreate.ADVPartUICtrl.Instance.chaControl != null) return false;
-
-#if USE_BEPINEX_50
-            // 右側のメインタブでカットが選ばれているときのみ
-            if (Traverse.Create(m_listUICtrl).Field<int>("mainTab").Value != MAIN_TAB_CUT) return false;
-#endif
             m_cut = new HEdit.ADVPart.Cut(ADVCreate.ADVPartUICtrl.Instance.cut);
 
             // エンドカットにはしない
@@ -45,18 +30,6 @@ namespace EC_ADVCopy
         {
             if (m_cut == null) return false;
             if (ADVCreate.ADVPartUICtrl.Instance.cut == null) return false;
-
-            // 誤動作防止 
-            // エフェクトが選ばれているときは動作しない
-            if (ADVCreate.ADVPartUICtrl.Instance.sortOrder != null) return false;
-
-            // キャラが選ばれているときは動作しない
-            if (ADVCreate.ADVPartUICtrl.Instance.chaControl != null) return false;
-
-#if USE_BEPINEX_50
-            // 右側のメインタブでカットが選ばれているときのみ
-            if (Traverse.Create(m_listUICtrl).Field<int>("mainTab").Value != MAIN_TAB_CUT) return false;
-#endif
 
             // 貼り付け先のカットのキャラ人数が、コピー元と異なる場合は、貼り付けない
             if (this.m_cut.charStates.Count != ADVCreate.ADVPartUICtrl.Instance.cut.charStates.Count)

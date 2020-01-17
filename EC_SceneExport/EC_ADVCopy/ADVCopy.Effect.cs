@@ -7,8 +7,8 @@
         const int EFFECT = 1;
         const int BUBBLE = 0;
 
-        private HEdit.ADVPart.ScreenEffect m_sf = new HEdit.ADVPart.ScreenEffect();
-        private HEdit.ADVPart.SpeechBubbles m_sb = new HEdit.ADVPart.SpeechBubbles();
+        private HEdit.ADVPart.ScreenEffect m_effect = new HEdit.ADVPart.ScreenEffect();
+        private HEdit.ADVPart.SpeechBubbles m_bubble = new HEdit.ADVPart.SpeechBubbles();
 
         private bool CopyEffect()
         {
@@ -18,12 +18,12 @@
             if (so.kind == EFFECT)
             {
                 Logger.LogDebug("Copy Effect");
-                m_sf.Copy((HEdit.ADVPart.ScreenEffect)so);
+                m_effect.Copy((HEdit.ADVPart.ScreenEffect)so);
             }
             else
             {
                 Logger.LogDebug("Copy Speech Bubble");
-                m_sb.Copy((HEdit.ADVPart.SpeechBubbles)so);
+                m_bubble.Copy((HEdit.ADVPart.SpeechBubbles)so);
             }
             m_copyKind = so.kind;
 
@@ -42,19 +42,19 @@
             if (m_copyKind == EFFECT)
             {
                 Logger.LogDebug("Paste Effect");
-                var sf = new HEdit.ADVPart.ScreenEffect(this.m_sf);
-                m_effectUICtrl.AddEffect(sf, false);
+                var effect = new HEdit.ADVPart.ScreenEffect(this.m_effect);
+                m_effectUICtrl.AddEffect(effect, false);
 
-                ADVCreate.ADVPartUICtrl.Instance.sortOrder = sf;
+                ADVCreate.ADVPartUICtrl.Instance.sortOrder = effect;
                 m_effectUICtrl.effectListUICtrl.UpdateUI();
             }
             else
             {
                 Logger.LogDebug("Paste SpeechBubble");
-                var sb = new HEdit.ADVPart.SpeechBubbles(this.m_sb);
-                m_textUICtrl.AddText(sb, false);
+                var bubble = new HEdit.ADVPart.SpeechBubbles(this.m_bubble);
+                m_textUICtrl.AddText(bubble, false);
 
-                ADVCreate.ADVPartUICtrl.Instance.sortOrder = sb;
+                ADVCreate.ADVPartUICtrl.Instance.sortOrder = bubble;
                 m_textUICtrl.effectListUICtrl.UpdateUI();
             }
 

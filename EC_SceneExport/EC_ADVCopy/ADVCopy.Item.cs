@@ -14,7 +14,6 @@
 
             Illusion.Game.Utils.Sound.Play(Illusion.Game.SystemSE.sel);
             Logger.LogMessage("Copy item");
-
 #endif
             return true;
         }
