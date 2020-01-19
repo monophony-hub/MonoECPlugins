@@ -25,7 +25,7 @@ namespace EC_SceneExport
         public const string PluginNameInternal = "EC_SceneExport";
         public const string GUID = "com.monophony.bepinex.sceneexport";
         public const string PluginName = "Scene Export";
-        public const string Version = "0.4";
+        public const string Version = "1.0";
         public static readonly string ExportPath = Path.Combine(Paths.GameRootPath, @"UserData\SceneExport");
 
         // partファイル識別用
@@ -72,9 +72,8 @@ namespace EC_SceneExport
         internal void Start()
         {
 #if USE_BEPINEX_50
-            EnablePlugin = Config.Bind("Config", "Enable", true, "Enable this plugin");
-            PartsExportHotkey = Config.Bind("Config", "Export Parts", new KeyboardShortcut(KeyCode.E, new KeyCode[] { KeyCode.LeftControl }), "Export all currently loaded parts in the game.");
-            PartsImportHotkey = Config.Bind("Config", "Import Parts", new KeyboardShortcut(KeyCode.I, new KeyCode[] { KeyCode.LeftControl }), "Import all files in the exported folder.");
+            PartsExportHotkey = Config.Bind("Config", "Export Parts", new KeyboardShortcut(KeyCode.E, new KeyCode[] { KeyCode.LeftAlt }), "Export all currently loaded parts in the game.");
+            PartsImportHotkey = Config.Bind("Config", "Import Parts", new KeyboardShortcut(KeyCode.I, new KeyCode[] { KeyCode.LeftAlt }), "Import all files in the exported folder.");
             EnableCharaRemove = Config.Bind("Config", "Enable chara remove (Experimental)", false, "If the importing ADV part over characters, delete the characters.");
 #endif
             // プラグイン無効
@@ -84,9 +83,6 @@ namespace EC_SceneExport
         // Used by the Unity Engine Scripting API
         internal void Update()
         {
-#if USE_BEPINEX_50
-            if (EnablePlugin.Value == false) return;
-#endif
 
 #if USE_BEPINEX_50
             if (PartsExportHotkey.Value.IsDown())
@@ -94,7 +90,7 @@ namespace EC_SceneExport
             if (PartsImportHotkey.Value.IsDown())
                 this.SafeAction(ImportParts);
 #else
-            if (!Input.GetKey(KeyCode.LeftControl)) return;
+            if (!Input.GetKey(KeyCode.LeftAlt)) return;
 
             if (Input.GetKeyDown(KeyCode.E))
             {

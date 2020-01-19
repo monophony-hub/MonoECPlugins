@@ -1,6 +1,4 @@
-﻿// 新しいBepinEx 5用には、以下のdefineを有効
-
-namespace EC_ADVCopy
+﻿namespace EC_ADVCopy
 {
     public partial class ADVCopy
     {

@@ -5,7 +5,7 @@ using System;
 using BepInEx;
 
 #if USE_BEPINEX_50
-using HarmonyLib;
+using BepInEx.Configuration;
 #endif
 
 using UnityEngine;
@@ -19,15 +19,12 @@ namespace EC_ADVCopy
         public const string PluginNameInternal = "EC_ADVCopy";
         public const string GUID = "com.monophony.bepinex.advcopy";
         public const string PluginName = "ADV Copy";
-        public const string Version = "0.2";
+        public const string Version = "1.0";
 
 #if USE_BEPINEX_50
         public static ConfigEntry<KeyboardShortcut> m_CopyKey { get; private set; }
         public static ConfigEntry<KeyboardShortcut> m_PasteKey { get; private set; }
-        public static ConfigEntry<KeyboardShortcut> m_PasteEffectKey { get; private set; }
-        public static ConfigEntry<KeyboardShortcut> m_PasteCutKey { get; private set; }
         public static ConfigEntry<KeyboardShortcut> m_SwapKey { get; private set; }
-        public static ConfigEntry<bool> m_enablePlugin { get; private set; }
 #endif
         private const String SceneName_HEditScene = "HEditScene";
 
@@ -90,12 +87,9 @@ namespace EC_ADVCopy
         internal void Start()
         {
 #if USE_BEPINEX_50
-            m_enablePlugin = Config.Bind("Config", "Enable", true, "Enable this plugin");
-            m_CopyKey = Config.Bind("Keyboard Shortcuts", "Copy", new KeyboardShortcut(KeyCode.C, new KeyCode[] { KeyCode.LeftAlt }), "Copy chara/effect/cut.");
-            m_PasteKey = Config.Bind("Keyboard Shortcuts", "Paste", new KeyboardShortcut(KeyCode.V, new KeyCode[] { KeyCode.LeftAlt }), "Paste chara.");
-            m_PasteEffectKey = Config.Bind("Keyboard Shortcuts", "Paste effect", new KeyboardShortcut(KeyCode.V, new KeyCode[] { KeyCode.LeftAlt }), "Paste effect.");
-            m_PasteCutKey = Config.Bind("Keyboard Shortcuts", "Paste cut", new KeyboardShortcut(KeyCode.V, new KeyCode[] { KeyCode.LeftAlt }), "Paste cut.");
-            m_SwapKey = Config.Bind("Keyboard Shortcuts", "Swap", new KeyboardShortcut(KeyCode.S, new KeyCode[] { KeyCode.LeftAlt }), "Swwap chara.");
+            m_CopyKey = Config.Bind("Keyboard Shortcuts", "Copy", new KeyboardShortcut(KeyCode.C, new KeyCode[] { KeyCode.LeftAlt }), "Copy");
+            m_PasteKey = Config.Bind("Keyboard Shortcuts", "Paste", new KeyboardShortcut(KeyCode.V, new KeyCode[] { KeyCode.LeftAlt }), "Paste");
+            m_SwapKey = Config.Bind("Keyboard Shortcuts", "Swap", new KeyboardShortcut(KeyCode.S, new KeyCode[] { KeyCode.LeftAlt }), "Swwap");
 #endif
             this.enabled = false;
         }
@@ -103,9 +97,6 @@ namespace EC_ADVCopy
         // Used by the Unity Engine Scripting API
         internal void Update()
         {
-#if USE_BEPINEX_50
-            if (m_enablePlugin.Value == false) return;
-#endif
 
 #if USE_BEPINEX_50
             if (m_CopyKey.Value.IsDown())
@@ -118,23 +109,11 @@ namespace EC_ADVCopy
                 if (SafeAction(SwapChara)) return;
             }
 
-            // エフェクト、キャラ、カットのキーバインドが同じ場合、
-            // エフェクト、キャラ、カットの順で優先的に処理する。
-            // 1か所でも処理が終わればreturn
-            if (m_PasteEffectKey.Value.IsDown())
-            {
-                if (SafeAction(PasteEffect)) return;
-            }
-
             if (m_PasteKey.Value.IsDown())
             {
-                if (SafeAction(PasteChara)) return;
+                if (SafeAction(Paste)) return;
             }
 
-            if (m_PasteCutKey.Value.IsDown())
-            {
-                if (SafeAction(PasteCut)) return;
-            }
 #else
             if (!Input.GetKey(KeyCode.LeftAlt)) return;
 
